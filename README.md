@@ -12,4 +12,4 @@ This is a web event project that includes a CRUD API for managing categories. Th
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/<your-github-username>/<repository-name>.git
+   git clone https://github.com/Muhrafli49/Event-App-API.git
