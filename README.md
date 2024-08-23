@@ -15,8 +15,12 @@ This is a web event project that includes a CRUD API for managing categories. Th
    git clone https://github.com/Muhrafli49/Event-App-API.git
    ```
 2. Install dependencies:
+   ```
    npm install
+   ```
     
 3. Run the application in development mode:
+   ```
    npm run dev
+   ```
    
