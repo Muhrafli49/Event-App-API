@@ -4,8 +4,8 @@
  * Module dependencies.
  */
 
-var app = require('../app');
-var debug = require('debug')('server-event-app:server');
+const app = require('../app');
+const debug = require('debug')('server-event-app:server');
 const http = require('http');
 const db = require('../app/db')
 
