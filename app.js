@@ -9,6 +9,10 @@ const app = express();
 // import router categories
 const categoriesRouter = require('./app/api/v1/categories/router');
 
+// import router images
+const imagesRouter = require('./app/api/images/router');
+
+
 // inisiasi route v1
 const v1 = '/api/v1/cms';
 
@@ -32,6 +36,9 @@ app.get('/', (req, res) => {
 
 // Menggunakan API category
 app.use(v1, categoriesRouter);
+
+// Menggunakan API category
+app.use(v1, imagesRouter);
 
 // Menggunakan handler error
 app.use(notFoundMiddleware);
