@@ -18,6 +18,12 @@ const talentsRouter = require('./app/api/v1/talents/router');
 // import router events
 const eventsRouter = require('./app/api/v1/events/router');
 
+// import router organizers
+const organizersRouter = require('./app/api/v1/organizers/router');
+
+// import router organizers
+const authCMSRouter = require('./app/api/v1/auth/router');
+
 // inisiasi route v1
 const v1 = '/api/v1/cms';
 
@@ -50,6 +56,12 @@ app.use(v1, talentsRouter);
 
 // Mengunakan API event
 app.use(v1, eventsRouter);
+
+// Mengunakan API organizer
+app.use(v1, organizersRouter);
+
+// Mengunakan API organizer
+app.use(v1, authCMSRouter);
 
 // Menggunakan handler error
 app.use(notFoundMiddleware);
