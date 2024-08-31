@@ -6,6 +6,9 @@ const logger = require('morgan');
 
 const app = express();
 
+// inisiasi route v1
+const v1 = '/api/v1/cms';
+
 // import router categories
 const categoriesRouter = require('./app/api/v1/categories/router');
 
@@ -24,8 +27,8 @@ const organizersRouter = require('./app/api/v1/organizers/router');
 // import router organizers
 const authCMSRouter = require('./app/api/v1/auth/router');
 
-// inisiasi route v1
-const v1 = '/api/v1/cms';
+// import router orders
+const ordersRouter = require('./app/api/v1/orders/router');
 
 // import middleware
 const notFoundMiddleware = require('./app/middleware/not-found');
@@ -62,6 +65,10 @@ app.use(v1, organizersRouter);
 
 // Mengunakan API organizer
 app.use(v1, authCMSRouter);
+
+// Mengunakan API orders
+app.use(v1, ordersRouter);
+
 
 // Menggunakan handler error
 app.use(notFoundMiddleware);
