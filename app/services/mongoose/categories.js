@@ -3,7 +3,7 @@ const { BadRequestError, NotFoundError } = require('../../errors');
 
 
 const getAllCategories = async (req) => {
-    const result = await Categories.find({organizer: req.user.organizer });
+    const result = await Categories.find({organizer: req.user.organizer});
 
     return result;
 };
@@ -11,7 +11,7 @@ const getAllCategories = async (req) => {
 const createCategories = async (req) => {
     const { name } = req.body;
     
-    const check = await Categories.findOne({ name });
+    const check = await Categories.findOne({ name, organizer: req.user.organizer });
 
     if (check) throw new BadRequestError('Category already exists');
 
@@ -30,7 +30,7 @@ const getOneCategories = async (req) => {
         organizer: req.user.organizer 
     });
 
-    if (!result) throw new NotFoundError('');
+    if (!result) throw new NotFoundError(`Category id: ${id} not found`);
     return result;
 }
 
@@ -59,15 +59,25 @@ const updateCategories = async (req) => {
 
 const deleteCategories = async (req) => {
     const { id } = req.params;
-    const result = await Categories.findOneAndDelete({
+
+    const category = await Categories.findOne({
         _id: id,
         organizer: req.user.organizer
     });
 
-    if (!result) throw new NotFoundError(`Category with id ${id} not found`);
+    if (!category) {
+        throw new NotFoundError(`Category with id ${id} not found or does not belong to you`);
+    }
+    
+    const result = await Categories.findByIdAndDelete(id);
+
+    if (!result) {
+        throw new NotFoundError(`Category with id ${id} not found`);
+    }
 
     return result;
-}
+};
+
 
 const checkingCategories = async (id) => {
     const result = await Categories.findOne({ _id: id });
