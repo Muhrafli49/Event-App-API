@@ -8,9 +8,9 @@ const { NotFoundError, BadRequestError} = require('../../errors');
 
 
 const getAllEvents = async (req) => {
-    const { keyword, category, talent } = req.query;
+    const { keyword, category, talent, status } = req.query;
 
-    let condition = {};
+    let condition = {organizer: req.user.organizer};
 
     if (keyword) {
         condition = { ...condition, title: { $regex: keyword, $options: 'i' } };
@@ -22,6 +22,10 @@ const getAllEvents = async (req) => {
 
     if (talent) {
         condition = { ...condition, talent: talent};
+    }
+
+    if (['Draft', 'Published'].includes(status)) {
+        condition = { ...condition, status: status };
     }
 
     const result = await Events.find(condition)
@@ -77,7 +81,8 @@ const createEvents = async (req) => {
         tickets,
         image,
         category,
-        talent 
+        talent,
+        organizer: req.user.organizer
     });
 
     return result;
@@ -88,7 +93,7 @@ const createEvents = async (req) => {
 const getOneEvents = async (req) => {
     const { id } = req.params;
 
-    const result = await Events.findOne({ _id: id })
+    const result = await Events.findOne({ _id: id, organizer: req.user.organizer })
         .populate({
             path: 'image',
             select: '_id name',
@@ -132,6 +137,7 @@ const updateEvents = async (req) => {
 
     const check = await Events.findOne({
         title,
+        organizer: req.user.organizer,
         _id: { $ne: id }
     });
 
@@ -150,7 +156,8 @@ const result = await Events.findOneAndUpdate(
         tickets,
         image,
         category,
-        talent
+        talent,
+        organizer: req.user.organizer
     },
     { new: true, runValidators: true }
 );
@@ -164,6 +171,12 @@ const result = await Events.findOneAndUpdate(
 const deleteEvents = async (req) => {
     const { id } = req.params;
 
+    const event = await Events.findOne({ _id: id, organizer: req.user.organizer });
+
+    if (!event) {
+        throw new NotFoundError(`Event id: ${id} is not found or does not belong to you`);
+    }
+
     const result = await Events.findByIdAndDelete(id);
 
     if (!result) {
@@ -171,7 +184,26 @@ const deleteEvents = async (req) => {
     }
 
     return result;
-}
+};
+
+const changeStatusEvents = async (req) => {
+    const { id } = req.params;
+    const { statusEvent } = req.body;
+    const checkEvent = await Events.findOne({
+        _id: id,
+        organizer: req.user.organizer
+    });
+
+    if(!checkEvent)
+        throw new NotFoundError(`Event id: ${id} is not found`);
+
+    checkEvent.statusEvent = statusEvent;
+
+    await checkEvent.save();
+
+    return checkEvent;
+
+};
 
 
 module.exports = {
@@ -179,5 +211,6 @@ module.exports = {
     createEvents,
     getOneEvents,
     updateEvents,
-    deleteEvents
+    deleteEvents,
+    changeStatusEvents
 }
