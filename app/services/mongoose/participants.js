@@ -1,9 +1,10 @@
 const Participant = require('../../api/v1/participants/model');
 const Events = require('../../api/v1/events/model');
 const Orders = require('../../api/v1/orders/model');
-const { otpMail } = require('../mail');
+const { otpMail, orderMail  } = require('../mail');
 const { NotFoundError, BadRequestError, UnauthorizedError } = require('../../errors');
 const { createTokenParticipant, createJWT } = require('../../utils');
+const Payments = require('../../api/v1/payments/model');
 
 const signupParticipant = async (req) => {
     const { firstName, lastName, email, password, role } = req.body;
@@ -122,6 +123,86 @@ const getAllOrders = async (req) => {
     return result;
 };
 
+const checkoutOrder = async (req) => {
+    const { event, personalDetail, payment, tickets } = req.body;
+
+    const checkingEvent = await Events.findOne({ _id: event });
+    if (!checkingEvent) {
+        throw new NotFoundError(`Event not found with id ${event}`);
+    }
+
+    const checkingPayment = await Payments.findOne({ _id: payment });
+    if (!checkingPayment) {
+        throw new NotFoundError(`There is no payment method with id: ${payment}`);
+    }
+
+    let totalPay = 0;
+    let totalOrderTicket = 0;
+
+    // Proses tiket
+    for (const tic of tickets) {
+        const eventTicket = checkingEvent.tickets.find(ticket => tic.ticketCategories.type === ticket.type);
+
+        if (!eventTicket) {
+            throw new NotFoundError(`Ticket type ${tic.ticketCategories.type} not found`);
+        }
+
+        if (tic.sumTicket > eventTicket.stock) {
+            throw new NotFoundError('Stock event tidak mencukupi');
+        } else {
+            eventTicket.stock -= tic.sumTicket;
+            totalOrderTicket += tic.sumTicket;
+            totalPay += tic.ticketCategories.price * tic.sumTicket;
+        }
+    }
+
+    // Simpan perubahan acara
+    await checkingEvent.save();
+
+    // Data acara untuk histori
+    const historyEvent = {
+        title: checkingEvent.title,
+        date: checkingEvent.date,
+        about: checkingEvent.about,
+        tagline: checkingEvent.tagline,
+        keyPoint: checkingEvent.keyPoint,
+        venueName: checkingEvent.venueName,
+        tickets: tickets,
+        image: checkingEvent.image,
+        category: checkingEvent.category,
+        talent: checkingEvent.talent,
+        organizer: checkingEvent.organizer,
+    };
+
+    // Buat pesanan baru
+    const result = new Orders({
+        date: new Date(),
+        personalDetail: personalDetail,
+        totalPay,
+        totalOrderTicket,
+        orderItems: tickets,
+        participant: req.participant.id,
+        event,
+        historyEvent,
+        payment,
+    });
+
+    // Simpan pesanan
+    await result.save();
+
+    // Kirim email konfirmasi pesanan
+    await orderMail(req.participant.email, {
+        orderId: result._id,
+        totalPay,
+        totalOrderTicket,
+        orderItems: tickets,
+        personalDetail: personalDetail,
+        historyEvent: historyEvent
+    });
+
+    return result;
+};
+
 
 module.exports = {
     signupParticipant,
@@ -129,5 +210,6 @@ module.exports = {
     signinParticipant,
     getAllEvents,
     getOneEvent,
-    getAllOrders
+    getAllOrders,
+    checkoutOrder,
 }
