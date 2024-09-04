@@ -33,6 +33,10 @@ const ordersRouter = require('./app/api/v1/orders/router');
 // import router participants
 const participantsRouter = require('./app/api/v1/participants/router');
 
+// import router payments
+const paymentsRouter = require('./app/api/v1/payments/router');
+
+
 
 // import middleware
 const notFoundMiddleware = require('./app/middleware/not-found');
@@ -76,6 +80,8 @@ app.use(`${v1}/cms`, ordersRouter);
 // Mengunakan API participants
 app.use(v1, participantsRouter);
 
+// Mengunakan API payments
+app.use(`${v1}/cms`, paymentsRouter);
 
 // Menggunakan handler error
 app.use(notFoundMiddleware);
